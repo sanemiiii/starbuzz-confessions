@@ -1,4 +1,4 @@
-// 🔑 REAL FIREBASE CONFIGURATION
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCn3cAWXNm5x58sed8JCcxRqMSyv5LfRBk",
   authDomain: "starbuzz-confessions.firebaseapp.com",
@@ -8,12 +8,12 @@ const firebaseConfig = {
   appId: "1:240429778398:web:98665d24334b44353f894f"
 };
 
-// Initialize Firebase
+// Init
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// 🔹 GET HTML ELEMENTS
+// ELEMENTS
 const authContainer = document.getElementById('auth-container');
 const dashboard = document.getElementById('dashboard');
 const emailInput = document.getElementById('email');
@@ -28,107 +28,72 @@ const targetLinkInput = document.getElementById('target-link');
 const confessionMsgInput = document.getElementById('confession-msg');
 const confessionList = document.getElementById('confession-list');
 
-// 🔹 SIGN UP
+// SIGN UP
 signupBtn.addEventListener('click', () => {
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-
-  if(email && password){
-    auth.createUserWithEmailAndPassword(email, password)
-      .then(() => {
-        alert('Sign up successful!');
-        emailInput.value = '';
-        passwordInput.value = '';
-      })
-      .catch(e => alert(e.message));
-  } else {
-    alert('Please enter email and password.');
-  }
+  auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value)
+    .then(() => {
+      alert("Signup successful!");
+    })
+    .catch(err => alert(err.message));
 });
 
-// 🔹 LOGIN
+// LOGIN
 loginBtn.addEventListener('click', () => {
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-
-  if(email && password){
-    auth.signInWithEmailAndPassword(email, password)
-      .then(() => {
-        emailInput.value = '';
-        passwordInput.value = '';
-      })
-      .catch(e => alert(e.message));
-  } else {
-    alert('Please enter email and password.');
-  }
+  auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value)
+    .catch(err => alert(err.message));
 });
 
-// 🔹 LOGOUT
-logoutBtn.addEventListener('click', () => {
-  auth.signOut();
-});
+// LOGOUT
+logoutBtn.addEventListener('click', () => auth.signOut());
 
-// 🔹 AUTH STATE CHANGE
+// AUTH STATE LISTENER
 auth.onAuthStateChanged(user => {
-  if(user){
-    authContainer.style.display = 'none';
-    dashboard.style.display = 'block';
+  if (user) {
+    authContainer.style.display = "none";
+    dashboard.style.display = "block";
+
     shareLinkInput.value = `${window.location.origin}?user=${user.uid}`;
     loadConfessions(user.uid);
   } else {
-    authContainer.style.display = 'block';
-    dashboard.style.display = 'none';
+    authContainer.style.display = "block";
+    dashboard.style.display = "none";
   }
 });
 
-// 🔹 COPY SHARE LINK
-copyBtn.addEventListener('click', () => {
+// COPY LINK
+copyBtn.addEventListener("click", () => {
   shareLinkInput.select();
-  shareLinkInput.setSelectionRange(0, 99999);
-  document.execCommand('copy');
-  alert('Link copied!');
+  document.execCommand("copy");
+  alert("Copied!");
 });
 
-// 🔹 SEND ANONYMOUS CONFESSION
-sendConfBtn.addEventListener('click', () => {
-  const targetUrl = targetLinkInput.value.trim();
-  const message = confessionMsgInput.value.trim();
+// SEND CONFESSION
+sendConfBtn.addEventListener("click", () => {
+  const url = new URL(targetLinkInput.value);
+  const receiverId = url.searchParams.get("user");
+  const msg = confessionMsgInput.value;
 
-  if(!targetUrl || !message){
-    alert('Please enter a valid link and message.');
-    return;
-  }
+  if (!receiverId || !msg) return alert("Invalid link or empty message.");
 
-  try {
-    const url = new URL(targetUrl);
-    const receiverId = url.searchParams.get('user');
-    if(!receiverId){
-      alert('Invalid user link.');
-      return;
-    }
+  db.collection("confessions").add({
+    receiverId,
+    message: msg,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
 
-    db.collection('confessions').add({
-      receiverId: receiverId,
-      message: message,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    confessionMsgInput.value = '';
-    alert('Anonymous confession sent!');
-  } catch(e){
-    alert('Invalid link format.');
-  }
+  confessionMsgInput.value = "";
+  alert("Sent!");
 });
 
-// 🔹 LOAD RECEIVED CONFESSIONS
-function loadConfessions(userId){
-  db.collection('confessions')
-    .where('receiverId', '==', userId)
-    .orderBy('timestamp', 'desc')
+// LOAD CONFESSIONS
+function loadConfessions(uid) {
+  db.collection("confessions")
+    .where("receiverId", "==", uid)
+    .orderBy("timestamp", "desc")
     .onSnapshot(snapshot => {
-      confessionList.innerHTML = '';
+      confessionList.innerHTML = "";
       snapshot.forEach(doc => {
-        const li = document.createElement('li');
+        const li = document.createElement("li");
         li.textContent = doc.data().message;
         confessionList.appendChild(li);
       });
