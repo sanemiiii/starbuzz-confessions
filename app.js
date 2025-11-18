@@ -1,11 +1,11 @@
-// 🔑 FIREBASE CONFIGURATION
+// 🔑 REAL FIREBASE CONFIGURATION
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCn3cAWXNm5x58sed8JCcxRqMSyv5LfRBk",
+  authDomain: "starbuzz-confessions.firebaseapp.com",
+  projectId: "starbuzz-confessions",
+  storageBucket: "starbuzz-confessions.firebasestorage.app",
+  messagingSenderId: "240429778398",
+  appId: "1:240429778398:web:98665d24334b44353f894f"
 };
 
 // Initialize Firebase
