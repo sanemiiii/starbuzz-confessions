@@ -1,52 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Starbuzz Confessions</title>
-  <!-- Link to CSS -->
-  <link rel="stylesheet" href="style.css">
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.15.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.15.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.15.0/firebase-firestore-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ali's Starbuzz Confessions</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Firebase SDK (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.15.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.15.0/firebase-firestore-compat.js"></script>
+    
+    <!-- App JS -->
+    <script defer src="app.js"></script>
 </head>
 <body>
+    <header>
+        <h1>Ali's Starbuzz Confessions</h1>
+    </header>
 
-  <!-- LOGIN / SIGNUP -->
-  <div id="auth-container">
-    <h2>Login / Signup</h2>
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
-    <div>
-      <button id="login-btn">Login</button>
-      <button id="signup-btn">Sign Up</button>
+    <!-- AUTH CONTAINER -->
+    <div id="auth-container">
+        <h2>Login / Sign Up</h2>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button id="login-btn">Login</button>
+        <button id="signup-btn">Sign Up</button>
     </div>
-  </div>
 
-  <!-- DASHBOARD -->
-  <div id="dashboard" style="display:none;">
-    <h2>Your Dashboard</h2>
+    <!-- DASHBOARD -->
+    <div id="dashboard" style="display:none;">
+        <h2>Dashboard</h2>
+        <button id="logout-btn">Logout</button>
 
-    <!-- Share Link -->
-    <p>Share this link for anonymous confessions:</p>
-    <input type="text" id="share-link" readonly>
-    <button id="copy-link-btn">Copy Link</button>
+        <h3>Share your link:</h3>
+        <input type="text" id="share-link" readonly>
+        <button id="copy-link-btn">Copy Link</button>
 
-    <!-- Send Anonymous Confession -->
-    <h3>Send an Anonymous Confession</h3>
-    <input type="text" id="target-link" placeholder="Paste user link">
-    <textarea id="confession-msg" placeholder="Your anonymous confession"></textarea>
-    <button id="send-confession-btn">Send</button>
+        <h3>Send Anonymous Confession:</h3>
+        <input type="text" id="target-link" placeholder="Paste their link here">
+        <textarea id="confession-msg" placeholder="Write your confession"></textarea>
+        <button id="send-confession-btn">Send Confession</button>
 
-    <!-- Received Confessions -->
-    <h3>Your Confessions</h3>
-    <ul id="confession-list"></ul>
-
-    <button id="logout-btn">Logout</button>
-  </div>
-
-  <!-- Firebase JS logic -->
-  <script src="app.js"></script>
+        <h3>Received Confessions:</h3>
+        <ul id="confession-list"></ul>
+    </div>
 </body>
 </html>
