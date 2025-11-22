@@ -1,4 +1,4 @@
-// Firebase config
+// Firebase Init
 const firebaseConfig = {
   apiKey: "AIzaSyCn3cAWXNm5x58sed8JCcxRqMSyv5LfRBk",
   authDomain: "starbuzz-confessions.firebaseapp.com",
@@ -8,12 +8,11 @@ const firebaseConfig = {
   appId: "1:240429778398:web:98665d24334b44353f894f"
 };
 
-// Init
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// ELEMENTS
+// Elements
 const authContainer = document.getElementById('auth-container');
 const dashboard = document.getElementById('dashboard');
 const emailInput = document.getElementById('email');
@@ -28,73 +27,121 @@ const targetLinkInput = document.getElementById('target-link');
 const confessionMsgInput = document.getElementById('confession-msg');
 const confessionList = document.getElementById('confession-list');
 
-// SIGN UP
-signupBtn.addEventListener('click', () => {
-  auth.createUserWithEmailAndPassword(emailInput.value, passwordInput.value)
-    .then(() => {
-      alert("Signup successful!");
-    })
-    .catch(err => alert(err.message));
+const headerAvatar = document.getElementById('header-avatar');
+const dashAvatar = document.getElementById('dash-avatar');
+const dashName = document.getElementById('dash-name');
+const dashEmail = document.getElementById('dash-email');
+
+const avatarOptions = document.querySelectorAll('.avatar-option');
+const avatarUrlInput = document.getElementById('avatar-url-input');
+const displayNameInput = document.getElementById('display-name-input');
+const saveProfileBtn = document.getElementById('save-profile-btn');
+
+let selectedAvatarUrl = "";
+
+// Avatar selection
+avatarOptions.forEach(a=>{
+  a.addEventListener('click',()=>{
+    avatarOptions.forEach(x=>x.classList.remove('selected'));
+    a.classList.add('selected');
+    selectedAvatarUrl = a.dataset.url;
+    avatarUrlInput.value = selectedAvatarUrl;
+  });
 });
 
-// LOGIN
-loginBtn.addEventListener('click', () => {
-  auth.signInWithEmailAndPassword(emailInput.value, passwordInput.value)
-    .catch(err => alert(err.message));
+// Save Profile
+saveProfileBtn.addEventListener('click', async ()=>{
+  const user = auth.currentUser;
+  if(!user){ alert('Sign in first'); return; }
+  const displayName = displayNameInput.value.trim();
+  const photoURL = avatarUrlInput.value.trim() || '';
+  await db.collection('users').doc(user.uid).set({displayName, photoURL},{merge:true});
+  alert('Profile saved!');
+  loadAndShowUserProfile(user.uid);
 });
 
-// LOGOUT
-logoutBtn.addEventListener('click', () => auth.signOut());
+// Auth Actions
+signupBtn.addEventListener('click', ()=>{
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+  if(!email||!password) return alert('Enter email & password');
+  auth.createUserWithEmailAndPassword(email,password)
+    .then(()=>{ emailInput.value=''; passwordInput.value=''; alert('Signed up!'); })
+    .catch(e=>alert(e.message));
+});
 
-// AUTH STATE LISTENER
-auth.onAuthStateChanged(user => {
-  if (user) {
-    authContainer.style.display = "none";
-    dashboard.style.display = "block";
+loginBtn.addEventListener('click', ()=>{
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+  if(!email||!password) return alert('Enter email & password');
+  auth.signInWithEmailAndPassword(email,password)
+    .catch(e=>alert(e.message));
+});
 
-    shareLinkInput.value = `${window.location.origin}?user=${user.uid}`;
+logoutBtn.addEventListener('click',()=>auth.signOut());
+
+// Auth State
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    authContainer.style.display='none';
+    dashboard.style.display='block';
+    shareLinkInput.value=`${window.location.origin}?user=${user.uid}`;
+    await loadAndShowUserProfile(user.uid);
     loadConfessions(user.uid);
   } else {
-    authContainer.style.display = "block";
-    dashboard.style.display = "none";
+    authContainer.style.display='block';
+    dashboard.style.display='none';
+    headerAvatar.style.display='none';
+    dashAvatar.style.display='none';
+    dashName.textContent='';
+    dashEmail.textContent='';
   }
 });
 
-// COPY LINK
-copyBtn.addEventListener("click", () => {
+// Load User Profile
+async function loadAndShowUserProfile(uid){
+  const doc = await db.collection('users').doc(uid).get();
+  const data = doc.exists ? doc.data() : {};
+  const name = data.displayName || auth.currentUser.email.split('@')[0];
+  const photo = data.photoURL || '';
+  if(photo){headerAvatar.src=photo; headerAvatar.style.display='inline-block'; dashAvatar.src=photo; dashAvatar.style.display='inline-block';}
+  else {headerAvatar.style.display='none'; dashAvatar.style.display='none';}
+  dashName.textContent=name;
+  dashEmail.textContent=auth.currentUser.email;
+  displayNameInput.value=data.displayName||'';
+  avatarUrlInput.value=data.photoURL||'';
+}
+
+// Copy Link
+copyBtn.addEventListener('click',()=>{
   shareLinkInput.select();
-  document.execCommand("copy");
-  alert("Copied!");
+  document.execCommand('copy');
+  alert('Link copied!');
 });
 
-// SEND CONFESSION
-sendConfBtn.addEventListener("click", () => {
-  const url = new URL(targetLinkInput.value);
-  const receiverId = url.searchParams.get("user");
-  const msg = confessionMsgInput.value;
-
-  if (!receiverId || !msg) return alert("Invalid link or empty message.");
-
-  db.collection("confessions").add({
-    receiverId,
-    message: msg,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  });
-
-  confessionMsgInput.value = "";
-  alert("Sent!");
+// Send Confession
+sendConfBtn.addEventListener('click', async ()=>{
+  const targetUrl = targetLinkInput.value.trim();
+  const message = confessionMsgInput.value.trim();
+  if(!targetUrl||!message) return alert('Enter link & message');
+  try{
+    const url = new URL(targetUrl);
+    const receiverId = url.searchParams.get('user');
+    if(!receiverId) return alert('Invalid link');
+    await db.collection('confessions').add({receiverId,message,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+    confessionMsgInput.value='';
+    alert('Anonymous confession sent!');
+  }catch(e){alert('Invalid link');}
 });
 
-// LOAD CONFESSIONS
-function loadConfessions(uid) {
-  db.collection("confessions")
-    .where("receiverId", "==", uid)
-    .orderBy("timestamp", "desc")
-    .onSnapshot(snapshot => {
-      confessionList.innerHTML = "";
-      snapshot.forEach(doc => {
-        const li = document.createElement("li");
-        li.textContent = doc.data().message;
+// Load Confessions
+function loadConfessions(userId){
+  db.collection('confessions').where('receiverId','==',userId).orderBy('timestamp','desc')
+    .onSnapshot(snapshot=>{
+      confessionList.innerHTML='';
+      snapshot.forEach(doc=>{
+        const li=document.createElement('li');
+        li.textContent=doc.data().message;
         confessionList.appendChild(li);
       });
     });
